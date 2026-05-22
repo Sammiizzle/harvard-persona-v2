@@ -6,16 +6,16 @@
   <title>Harvard Device Recommendation Tool</title>
   <style>
     body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f5f5f5;
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
     }
 
     .topbar {
-      background: #A51C30;
-      height: 70px;
+      background: black;
+      height: 87px;
       display: flex;
       align-items: center;
     }
@@ -26,14 +26,14 @@
     }
 
     .logo {
-      height: 77px;
+      height: 80px;
     }
 
     .page-container {
       width: 900px;
       margin: 60px auto;
       background: white;
-      padding: 40px;
+      padding: 42px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       border-radius: 4px;
     }
@@ -64,7 +64,7 @@
     }
 
     button {
-      background: #A51C30;
+      background: #a6053b;
       color: white;
       border: none;
       padding: 12px 20px;
@@ -86,19 +86,35 @@
     }
 
     .device {
-      padding: 8px;
+      padding: 12px;
       background: #efefef;
-      margin-top: 6px;
+      margin-top: 8px;
       border-radius: 4px;
+    }
+    
+    .device a {
+      color: #a6053b;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .device a:hover {
+      text-decoration: underline;
     }
 
     .resultCard {
-      margin-top: 30px;
+      margin-top: 10px;
       padding: 20px;
       background: #fafafa;
       border-left: 5px solid #A51C30;
       border-radius: 6px;
       overflow-wrap: break-word;
+    }
+    
+    .warning-text {
+      color: #b00;
+      font-style: italic;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -116,152 +132,181 @@
 
     <div class="tool-box">
       <input type="text" id="harvardID" placeholder="Enter Harvard ID">
-      <button id="lookupBtn" onclick="lookupUser()" disabled>Find My Recommendation</button>
+      <button id="lookupBtn" onclick="lookupUser()">Find My Recommendation</button>
     </div>
 
     <div id="result"></div>
   </div>
 
   <script>
-  let users = {};
+    // Global User Registry populated by CSV
+    const users = {};
 
-  const deviceMatrix = {
-    Fixed: [
-      { name: "Dell Pro Slim Desktop", url: "https://www.dell.com/en-us/shop/desktop-computers/dell-pro-slim-desktop/spd/dell-pro-qcs1250-slim-desktop" },
-      { name: "Dell Pro All-in-One", url: "https://www.dell.com/en-us/shop/desktop-computers/dell-pro-24-all-in-one-plus-desktop/spd/dell-pro-qb24250-aio" },
-      { name: "iMac M4 Pro", url: "https://www.apple.com/shop/buy-mac/imac" }
-    ],
-    Core: [
-      { name: "Dell Pro Plus 13/14", url: "https://www.dell.com/en-us/shop/dell-laptops/dell-pro-13-plus-laptop-or-2-in-1/spd/dell-pro-pb13250-2-in-1-laptop/bts114_pb13250_usx" },
-      { name: "MacBook Air M4", url: "https://www.apple.com/macbook-air/" },
-      { name: "MacBook Pro 14 M4 Pro", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
-    ],
-    Mobile: [
-      { name: "Dell Pro 13 Premium", url: "https://www.dell.com/en-us/shop/dell-laptops/dell-pro-13-premium-laptop/spd/dell-pro-13-premium" },
-      { name: "MacBook Air M4", url: "https://www.apple.com/macbook-air/" }
-    ],
-    Advanced: [
-      { name: "Dell Pro Max 14/16", url: "https://www.dell.com/en-us/shop/dell-laptops/dell-pro-max-14-laptop/spd/dell-pro-max-mc14250-laptop" },
-      { name: "MacBook Pro 14 M4 Pro", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
-    ]
-  };
+    // 1. THE HARDWARE CATALOG MATRIX
+    const personaMatrix = {
+      "admin-core": {
+        label: "Academic & Administrative Professional Users - Core",
+        devices: [
+          { name: "Dell Pro Plus 13/14 (Ultra 5, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
+          { name: "MacBook Air 14-inch (M5, 16GB RAM, 1TB SSD)", url: "https://www.apple.com/macbook-air/" }
+        ]
+      },
+      "admin-advanced": {
+        label: "Academic & Administrative Professional Users - Advanced",
+        devices: [
+          { name: "Dell Pro Max 14/16 (Ultra 7, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
+          { name: "MacBook Pro 14-inch (M5 Pro, 24GB RAM, 1TB SSD)", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
+        ]
+      },
+      "power-core": {
+        label: "Power & Specialist Users - Core",
+        devices: [
+          { name: "Dell Pro Max Premium 14/16 (Ultra 7, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
+          { name: "MacBook Pro 14/16-inch (M5 Pro, 24GB RAM, 1TB SSD)", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
+        ]
+      },
+      "power-advanced": {
+        label: "Power & Specialist Users - Advanced",
+        devices: [
+          { name: "Dell Pro Max Plus 16/18 (Ultra 7/9, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
+          { name: "MacBook Pro 16-inch (M5 Max, 36GB RAM, 1TB SSD)", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
+        ]
+      },
+      "fixed": {
+        label: "Academic & Administrative Professional Users - Fixed",
+        devices: [
+          { name: "Dell Pro Slim Desktop / All-in-One 25", url: "https://www.dell.com" },
+          { name: "iMac 24-inch (M5 Pro, 24GB RAM, 1TB SSD)", url: "https://www.apple.com/shop/buy-mac/imac" }
+        ]
+      },
+      "mobile": {
+        label: "Academic & Administrative Professional Users - Mobile",
+        devices: [
+          { name: "Dell Pro 13 Premium (Ultra 5, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
+          { name: "MacBook Air 13-inch (M5, 16GB RAM, 1TB SSD)", url: "https://www.apple.com/macbook-air/" }
+        ]
+      }
+    };
 
-  const titlePersonaMap = {
-    "Academic & Administrative Professional Users​- Advanced": "Dell Pro Max 14 or 16, Ultra 7, 32 GB RAM, 512 GB SSD​, MacBook Pro 14- or 16-inch, M5 Pro, 24 GB RAM, 1 TB SSD",
-    "Academic & Administrative Professional Users​- Core": "Dell Pro 13/14 Plus, Ultra 5, 32 GB RAM, 512 GB SSD​, MacBook Air, M5, 16 GB RAM, 1 TB SSD, MacBook Pro 14-inch, M5 Pro, 24 GB RAM, 1 TB SSD",
-    "Academic & Administrative Professional Users- Mobile": "Dell Pro 13 Premium, Ultra 5, 32 GB RAM, 512 GB SSD​, MacBook Air, M5, 16 GB RAM, 1 TB SSD",
-    "Academic & Administrative Professional Users- Fixed": "Dell Pro Slim Desktop, Ultra 5, 32 GB RAM, 512 GB SSD​, Dell Pro All-in-One 25, Ultra 5, 32 GB RAM, 512 GB SSD​, iMac, M5 Pro, 24 GB RAM, 1 TB SSD",
-    "Power & Specialist Users- Core": "Dell Pro Max Premium 14 or 16, Ultra 7, 32 GB RAM, 512 GB SSD​, MacBook Pro 14- or 16-inch, M5 Pro, 24 GB RAM, 1 TB SSD",
-    "Power & Specialist Users- Mobile": "Dell Pro 13 Plus 2-in-1, Ultra 7, 32 GB RAM, 512 GB SSD​, MacBook Pro 14-inch, M5 Pro, 24 GB RAM, 1 TB SSD",
-    "Power & Specialist Users- Advanced": "Dell Pro Max Plus 16 or 18, Ultra 7 or 9, 32 GB RAM, 512 GB SSD​, MacBook Pro 14- or 16-inch, M5 Max, 36 GB RAM, 1 TB SSD​, Dell Pro Max Tower, Ultra 7 or 9, 32 GB RAM, 512 GB SSD​, Mac Pro, M5 Max, 36 GB RAM, 1 TB SSD",
-  };
+    // 2. THE POLICY ENGINE MAP (Job Code -> Persona Key)
+    // Easily update this as we validate job codes!
+    const jobCodeToPersona = {
+      "I0756M": "admin-core",       // Applications Mgt II (Manager/Supervisor -> Core)
+      "IT Program Manager V": "admin-advanced", // Fallback text strings work too
+      "I0858P": "power-advanced",   // Sr. Systems Analyst (Upgraded to Advanced)
+      "Software Engineer": "power-advanced" 
+    };
 
-  function inferPersonaFromTitle(title) {
-    title = title.toLowerCase();
-    for (const key in titlePersonaMap) {
-      if (title.includes(key)) return titlePersonaMap[key];
-    }
-    return "Core";
-  }
+    // Simulated HR Export Data (HUID, Name, Class, Job Code/Family, Business Title)
+    const csvText = `
+Harvard ID,Name,classdescription,jobcode,businesstitle
+60846642,Eric Thompson,Admin & Professional,I0756M,Associate Director Endpoint Solutions
+60917469,Bailey Andrews,Admin & Professional,IT Program Manager V,IT Program Manager Endpoint Solutions
+81401640,Jenn Vasconcelos,Admin & Professional,I0756M,Associate Director Client Services PMO
+71775372,Samantha Diaz,Admin & Professional,Administrative/Refresh Coordinator,IT Procurement and Refresh
+80849052,Brian Weeks,Admin & Professional,I0858P,Associate Systems Engineer
+11276555,Junda Sun,Admin & Professional,Software Engineer,Associate Systems Engineer
+`.trim();
 
-  function capitalize(str) {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  }
+    function loadUsersFromCSV() {
+      const lines = csvText.split("\n");
 
-  async function loadUsers() {
-    try {
-      const response = await fetch("users.csv");
-      if (!response.ok) throw new Error("File not found");
-      const data = await response.text();
-      const rows = data.split("\n").slice(1);
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line === "") continue;
 
-      rows.forEach(row => {
-        if (!row.trim()) return;
-        const cols = row.split(",");
+        const cols = line.split(",");
         const id = cols[0].trim();
+        
         users[id] = {
-          name: cols[1] || "Unknown",
-          classdescription: cols[2] || "Unknown",
-          jobfamily: cols[3] || "Unknown",
-          jobtitle: cols[4] || "Unknown",
-          businesstitle: cols[5] || "Unknown",
-          persona: cols[7] ? capitalize(cols[7].trim()) : inferPersonaFromTitle(cols[3] || "")
+          name: cols[1].trim(),
+          classdescription: cols[2].trim(),
+          jobCode: cols[3].trim(),
+          businesstitle: cols[4].trim()
         };
-      });
-
-      console.log("Users loaded successfully");
-      document.getElementById("lookupBtn").disabled = false;
-
-    } catch (error) {
-      console.error("Error loading CSV:", error);
-      document.getElementById("result").innerHTML = "<p style='color:red;'>Error: Could not load user data. Check if users.csv is in the correct folder.</p>";
-      // Optional: Enable button anyway so people can use the "Title prompt" fallback- or are we going by job code?
-      document.getElementById("lookupBtn").disabled = false;
-    }
-  }
-
-  function lookupUser() {
-    let id = document.getElementById("harvardID").value.trim();
-    if (!id) {
-      document.getElementById("result").innerHTML = "<p>Please enter a Harvard ID.</p>";
-      return;
+      }
+      console.log("System Ready. Relational mappings operational.");
     }
 
-    let user = users[id];
-    let persona;
+    function lookupUser() {
+      const idInput = document.getElementById("harvardID");
+      const resultDiv = document.getElementById("result");
+      const id = idInput.value.trim();
 
-    if (!user) {
-      let title = prompt("User not found. Enter job title to estimate persona:");
-      if (!title) {
-        document.getElementById("result").innerHTML = "<p>No job title provided.</p>";
+      if (id === "") {
+        resultDiv.innerHTML = "<p>Please enter a Harvard ID.</p>";
         return;
       }
-      persona = inferPersonaFromTitle(title);
-      user = {
-        name: "Prototype User",
-        jobCode: "Unknown",
-        businesstitle: "Unknown",
-        jobtitle: title,
-        classdescription: "Estimated",
-        jobfamily: "Estimated",
-        persona: persona,
-      };
-    } else {
-      persona = user.persona;
+
+      let user = users[id];
+      let personaKey = "admin-core"; // Default Safety Net
+      let safetyNetUsed = false;
+      let reasonForSafetyNet = "";
+
+      if (!user) {
+        // Condition A: User completely missing from HR file
+        safetyNetUsed = true;
+        reasonForSafetyNet = "User record not found in HR roster. Default baseline applied.";
+        user = {
+          name: "Unknown User",
+          classdescription: "N/A",
+          jobCode: "N/A",
+          businesstitle: "N/A"
+        };
+      } else {
+        // Condition B: User exists, check if their Job Code is mapped
+        if (jobCodeToPersona[user.jobCode]) {
+          personaKey = jobCodeToPersona[user.jobCode];
+        } else {
+          safetyNetUsed = true;
+          reasonForSafetyNet = `Job code [${user.jobCode}] has no specific mapping assignment. Default baseline applied.`;
+        }
+      }
+
+      // Fetch target specs from our discrete catalog keys
+      const currentPersona = personaMatrix[personaKey];
+      const devices = currentPersona.devices;
+
+      // Render Dashboard Card UI
+      let html = "<div class='resultCard'>";
+      html += "<h3>User Account Details</h3>";
+      html += "<p><b>Harvard ID:</b> " + id + "</p>";
+      html += "<p><b>Full Name:</b> " + user.name + "</p>";
+      html += "<p><b>Classification:</b> " + user.classdescription + "</p>";
+      html += "<p><b>Assigned Job Code/Family:</b> " + user.jobCode + "</p>";
+      html += "<p><b>Business Title:</b> " + user.businesstitle + "</p>";
+
+      if (safetyNetUsed) {
+        html += "<p class='warning-text'>⚠️ " + reasonForSafetyNet + "</p>";
+      }
+
+      html += "<hr style='border:0; border-top: 1px solid #ddd; margin:20px 0;'>";
+      html += "<h3>Assigned Hardware Profile</h3>";
+      html += "<p><b>Profile Persona:</b> " + currentPersona.label + "</p>";
+      html += "<p><b>Profile Key:</b> <span style='color:#A51C30; font-family:monospace; font-weight:bold;'>" + personaKey + "</span></p>";
+
+      html += "<h3>Authorized Hardware Allocations</h3>";
+      for (let i = 0; i < devices.length; i++) {
+        const device = devices[i];
+        html += "<div class='device'>";
+        html += "🔹 <a href='" + device.url + "' target='_blank'>" + device.name + "</a>";
+        html += "</div>";
+      }
+      html += "</div>";
+
+      resultDiv.innerHTML = html;
     }
 
-    let personaKey = capitalize(persona);
-    let devices = deviceMatrix[personaKey] || [];
+    // Initialize application execution
+    loadUsersFromCSV();
 
-    let output = `
-      <h3>User Information</h3>
-      <p><b>Name:</b> ${user.name}</p>
-      <p><b>Class:</b> ${user.classdescription}</p>
-      <p><b>Job Family:</b> ${user.jobfamily}</p>
-      <p><b>Job Title:</b> ${user.jobtitle}</p>
-      <p><b>Business Title:</b> ${user.businesstitle}</p>
-      <hr>
-      <h3>Assigned Persona: <span style="color: #A51C30;">${personaKey}</span></h3>
-      <h3>Recommended Devices</h3>`;
-
-    devices.forEach(device => {
-      output += `<div class="device"><a href="${device.url}" target="_blank">${device.name}</a></div>`;
+    document.getElementById("harvardID").addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        lookupUser();
+      }
     });
-
-    document.getElementById("result").innerHTML = `<div class="resultCard">${output}</div>`;
-  }
-
-  // These run as soon as the script loads -- I THINK THIS IS ADEQUAT? ;/
-  loadUsers();
-
-  document.getElementById("harvardID").addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-      event.preventDefault(); 
-      lookupUser();
-    }
-  });
-</script>
+  </script>
 </body>
 
 </html>
