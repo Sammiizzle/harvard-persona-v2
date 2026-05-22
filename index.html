@@ -263,8 +263,8 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
       html += "<h3>User Account Details</h3>";
       html += "<p><b>Harvard ID:</b> " + id + "</p>";
       html += "<p><b>Full Name:</b> " + user.name + "</p>";
-      html += "<p><b>Classification:</b> " + user.classdescription + "</p>";
-      html += "<p><b>Assigned Job Code/Family:</b> " + user.jobCode + "</p>";
+      html += "<p><b>Class:</b> " + user.classdescription + "</p>";
+      html += "<p><b>Job Code:</b> " + user.jobCode + "</p>";
       html += "<p><b>Business Title:</b> " + user.businesstitle + "</p>";
 
       if (safetyNetUsed) {
@@ -272,11 +272,11 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
       }
 
       html += "<hr style='border:0; border-top: 1px solid #ddd; margin:20px 0;'>";
-      html += "<h3>Assigned Hardware Profile</h3>";
-      html += "<p><b>Profile Persona:</b> " + currentPersona.label + "</p>";
-      html += "<p><b>Profile Key:</b> <span style='color:#A51C30; font-family:monospace; font-weight:bold;'>" + personaKey + "</span></p>";
+      html += "<h3>Persona Profile</h3> <span style='color:#A51C30; font-family:monospace; font-weight:bold; font-size: 16px;'>";
+      html += "<p><b>Persona:</b> " + currentPersona.label + "</p>";
+      html += "<p><b>Key:</b> <span style='color:#A51C30; font-family:monospace; font-weight:bold; font-size: 8px;'>" + personaKey + "</span></p>";
 
-      html += "<h3>Authorized Hardware Allocations</h3>";
+      html += "<h3>Device Recommendation</h3>";
       for (let i = 0; i < devices.length; i++) {
         const device = devices[i];
         html += "<div class='device'>";
