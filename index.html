@@ -116,6 +116,14 @@
       font-style: italic;
       font-weight: bold;
     }
+
+    .persona-key {
+      font-style: italic;
+      color: #666;
+      font-size: 13px;
+      margin-top: 2px;
+      display: block;
+    }
   </style>
 </head>
 
@@ -139,35 +147,23 @@
   </div>
 
   <script>
+    // This empty object will hold our users once the CSV is parsed
     const users = {};
 
-    const personaMatrix = {
-      "admin-core": {
+    // GROUP 1: Academic & Administrative Professional Profiles
+    const academicMatrix = {
+      "core": {
         label: "Academic & Administrative Professional Users - Core",
         devices: [
           { name: "Dell Pro Plus 13/14 (Ultra 5, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
           { name: "MacBook Air 14-inch (M5, 16GB RAM, 1TB SSD)", url: "https://www.apple.com/macbook-air/" }
         ]
       },
-      "admin-advanced": {
+      "advanced": {
         label: "Academic & Administrative Professional Users - Advanced",
         devices: [
           { name: "Dell Pro Max 14/16 (Ultra 7, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
           { name: "MacBook Pro 14-inch (M5 Pro, 24GB RAM, 1TB SSD)", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
-        ]
-      },
-      "power-core": {
-        label: "Power & Specialist Users - Core",
-        devices: [
-          { name: "Dell Pro Max Premium 14/16 (Ultra 7, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
-          { name: "MacBook Pro 14/16-inch (M5 Pro, 24GB RAM, 1TB SSD)", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
-        ]
-      },
-      "power-advanced": {
-        label: "Power & Specialist Users - Advanced",
-        devices: [
-          { name: "Dell Pro Max Plus 16/18 (Ultra 7/9, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
-          { name: "MacBook Pro 16-inch (M5 Max, 36GB RAM, 1TB SSD)", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
         ]
       },
       "fixed": {
@@ -186,13 +182,32 @@
       }
     };
 
-    const jobCodeToPersona = {
-      "I0756M": "admin-core",     
-      "IT Program Manager V": "admin-advanced",
-      "I0858P": "power-advanced",
-      "Software Engineer": "power-advanced" 
+    // GROUP 2: Power & Specialist Profiles
+    const powerMatrix = {
+      "core": {
+        label: "Power & Specialist Users - Core",
+        devices: [
+          { name: "Dell Pro Max Premium 14/16 (Ultra 7, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
+          { name: "MacBook Pro 14/16-inch (M5 Pro, 24GB RAM, 1TB SSD)", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
+        ]
+      },
+      "advanced": {
+        label: "Power & Specialist Users - Advanced",
+        devices: [
+          { name: "Dell Pro Max Plus 16/18 (Ultra 7/9, 32GB RAM, 512GB SSD)", url: "https://www.dell.com" },
+          { name: "MacBook Pro 16-inch (M5 Max, 36GB RAM, 1TB SSD)", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
+        ]
+      }
     };
 
+    // POLICY ENGINE: Map Job Codes to a Primary Group and Sub-Profile
+    const jobCodeRules = {
+      "I0756M": { mainGroup: "academic", subProfile: "core" },       // Admin Mgr -> Academic Core
+      "I0858P": { mainGroup: "power", subProfile: "advanced" },      // Sr. Systems Analyst -> Power Advanced
+      "Software Engineer": { mainGroup: "power", subProfile: "advanced" }
+    };
+
+    // Your raw employee data string
     const csvText = `
 Harvard ID,Name,classdescription,jobcode,businesstitle
 60846642,Eric Thompson,Admin & Professional,I0756M,Associate Director Endpoint Solutions
@@ -203,6 +218,7 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
 11276555,Junda Sun,Admin & Professional,Software Engineer,Associate Systems Engineer
 `.trim();
 
+    // Loops through the raw text rows and builds clean user profiles
     function loadUsersFromCSV() {
       const lines = csvText.split("\n");
 
@@ -220,9 +236,10 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
           businesstitle: cols[4].trim()
         };
       }
-      console.log("System Ready. Relational mappings operational.");
+      console.log("Roster processed successfully.");
     }
 
+    // Handles looking up a user and printing their recommendation card
     function lookupUser() {
       const idInput = document.getElementById("harvardID");
       const resultDiv = document.getElementById("result");
@@ -234,13 +251,16 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
       }
 
       let user = users[id];
-      let personaKey = "admin-core";
+      
+      // Setup our fallbacks in case things are missing >,<
+      let selectedGroup = "academic";
+      let selectedSubProfile = "core";
       let safetyNetUsed = false;
       let reasonForSafetyNet = "";
 
       if (!user) {
         safetyNetUsed = true;
-        reasonForSafetyNet = "User record not found in HR roster. Default baseline applied.";
+        reasonForSafetyNet = "User record not found in HR roster. Default baseline profile applied.";
         user = {
           name: "Unknown User",
           classdescription: "N/A",
@@ -248,17 +268,29 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
           businesstitle: "N/A"
         };
       } else {
-        if (jobCodeToPersona[user.jobCode]) {
-          personaKey = jobCodeToPersona[user.jobCode];
+        // User exists! Let's check if their job code has explicit mapping rules (yay if you are reading this you rock btw!)
+        const rule = jobCodeRules[user.jobCode];
+        
+        if (rule) {
+          selectedGroup = rule.mainGroup;
+          selectedSubProfile = rule.subProfile;
         } else {
           safetyNetUsed = true;
-          reasonForSafetyNet = `Job code [${user.jobCode}] has no specific mapping assignment. Default baseline applied.`;
+          reasonForSafetyNet = `Job code [${user.jobCode}] has no specific rule. Default baseline profile applied.`;
         }
       }
 
-      const currentPersona = personaMatrix[personaKey];
-      const devices = currentPersona.devices;
+      // Read from our separated groupings arrays based on the rule
+      let finalPersona;
+      if (selectedGroup === "power") {
+        finalPersona = powerMatrix[selectedSubProfile];
+      } else {
+        finalPersona = academicMatrix[selectedSubProfile];
+      }
 
+      const devices = finalPersona.devices;
+
+      //display card
       let html = "<div class='resultCard'>";
       html += "<h3>User Account Details</h3>";
       html += "<p><b>Harvard ID:</b> " + id + "</p>";
@@ -272,10 +304,13 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
       }
 
       html += "<hr style='border:0; border-top: 1px solid #ddd; margin:20px 0;'>";
+      
+      // Render Persona details with the backend system key directly below it in italics!
       html += "<h3>Persona Profile</h3>";
-      html += "<p><b>Persona:</b> " + currentPersona.label + "</p>";
-      html += "<p><b>Key:</b> <span style='color:#A51C30; font-family:monospace; font-weight:bold; font-size: 14px;'> " + personaKey + "</span></p>";
+      html += "<p><b>Persona:</b> " + finalPersona.label + "</p>";
+      html += "<span class='persona-key'>System Lookup Key: " + selectedGroup + "-" + selectedSubProfile + "</span>";
 
+      // Render the allowed hardware list
       html += "<h3>Device Recommendation</h3>";
       for (let i = 0; i < devices.length; i++) {
         const device = devices[i];
@@ -288,8 +323,10 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
       resultDiv.innerHTML = html;
     }
 
+    // Run our data setup immediately when the page loads
     loadUsersFromCSV();
 
+    // Listen for the Enter key press in the input field
     document.getElementById("harvardID").addEventListener("keypress", function (event) {
       if (event.key === "Enter") {
         event.preventDefault();
