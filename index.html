@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Harvard Device Recommendation Tool</title>
+  <style>
+    body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    }
+
+    .topbar {
+      background: #A51C30;
+      height: 70px;
+      display: flex;
+      align-items: center;
+    }
+
+    .topbar-container {
+      width: 1200px;
+      margin: auto;
+    }
+
+    .logo {
+      height: 77px;
+    }
+
+    .page-container {
+      width: 900px;
+      margin: 60px auto;
+      background: white;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-radius: 4px;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 32px;
+      color: #222;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .tool-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background: #A51C30;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #8c1626;
+    }
+
+    #result {
+      margin-top: 30px;
+      padding: 25px;
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 4px;
+    }
+
+    .device {
+      padding: 8px;
+      background: #efefef;
+      margin-top: 6px;
+      border-radius: 4px;
+    }
+
+    .resultCard {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fafafa;
+      border-left: 5px solid #A51C30;
+      border-radius: 6px;
+      overflow-wrap: break-word;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-container">
+      <img src="HarvardLogo.png" class="logo" alt="Harvard Logo">
+    </div>
+  </header>
+
+  <div class="page-container">
+    <h1>Device Refresh Tool</h1>
+    <p class="subtitle">Enter your Harvard ID to view your recommended refresh device.</p>
+
+    <div class="tool-box">
+      <input type="text" id="harvardID" placeholder="Enter Harvard ID">
+      <button id="lookupBtn" onclick="lookupUser()" disabled>Find My Recommendation</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+  let users = {};
+
+  const deviceMatrix = {
+    Fixed: [
+      { name: "Dell Pro Slim Desktop", url: "https://www.dell.com/en-us/shop/desktop-computers/dell-pro-slim-desktop/spd/dell-pro-qcs1250-slim-desktop" },
+      { name: "Dell Pro All-in-One", url: "https://www.dell.com/en-us/shop/desktop-computers/dell-pro-24-all-in-one-plus-desktop/spd/dell-pro-qb24250-aio" },
+      { name: "iMac M4 Pro", url: "https://www.apple.com/shop/buy-mac/imac" }
+    ],
+    Core: [
+      { name: "Dell Pro Plus 13/14", url: "https://www.dell.com/en-us/shop/dell-laptops/dell-pro-13-plus-laptop-or-2-in-1/spd/dell-pro-pb13250-2-in-1-laptop/bts114_pb13250_usx" },
+      { name: "MacBook Air M4", url: "https://www.apple.com/macbook-air/" },
+      { name: "MacBook Pro 14 M4 Pro", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
+    ],
+    Mobile: [
+      { name: "Dell Pro 13 Premium", url: "https://www.dell.com/en-us/shop/dell-laptops/dell-pro-13-premium-laptop/spd/dell-pro-13-premium" },
+      { name: "MacBook Air M4", url: "https://www.apple.com/macbook-air/" }
+    ],
+    Advanced: [
+      { name: "Dell Pro Max 14/16", url: "https://www.dell.com/en-us/shop/dell-laptops/dell-pro-max-14-laptop/spd/dell-pro-max-mc14250-laptop" },
+      { name: "MacBook Pro 14 M4 Pro", url: "https://www.apple.com/shop/buy-mac/macbook-pro" }
+    ]
+  };
+
+  const titlePersonaMap = {
+    "Academic & Administrative Professional Users​- Advanced": "Dell Pro Max 14 or 16, Ultra 7, 32 GB RAM, 512 GB SSD​, MacBook Pro 14- or 16-inch, M5 Pro, 24 GB RAM, 1 TB SSD",
+    "Academic & Administrative Professional Users​- Core": "Dell Pro 13/14 Plus, Ultra 5, 32 GB RAM, 512 GB SSD​, MacBook Air, M5, 16 GB RAM, 1 TB SSD, MacBook Pro 14-inch, M5 Pro, 24 GB RAM, 1 TB SSD",
+    "Academic & Administrative Professional Users- Mobile": "Dell Pro 13 Premium, Ultra 5, 32 GB RAM, 512 GB SSD​, MacBook Air, M5, 16 GB RAM, 1 TB SSD",
+    "Academic & Administrative Professional Users- Fixed": "Dell Pro Slim Desktop, Ultra 5, 32 GB RAM, 512 GB SSD​, Dell Pro All-in-One 25, Ultra 5, 32 GB RAM, 512 GB SSD​, iMac, M5 Pro, 24 GB RAM, 1 TB SSD",
+    "Power & Specialist Users- Core": "Dell Pro Max Premium 14 or 16, Ultra 7, 32 GB RAM, 512 GB SSD​, MacBook Pro 14- or 16-inch, M5 Pro, 24 GB RAM, 1 TB SSD",
+    "Power & Specialist Users- Mobile": "Dell Pro 13 Plus 2-in-1, Ultra 7, 32 GB RAM, 512 GB SSD​, MacBook Pro 14-inch, M5 Pro, 24 GB RAM, 1 TB SSD",
+    "Power & Specialist Users- Advanced": "Dell Pro Max Plus 16 or 18, Ultra 7 or 9, 32 GB RAM, 512 GB SSD​, MacBook Pro 14- or 16-inch, M5 Max, 36 GB RAM, 1 TB SSD​, Dell Pro Max Tower, Ultra 7 or 9, 32 GB RAM, 512 GB SSD​, Mac Pro, M5 Max, 36 GB RAM, 1 TB SSD",
+  };
+
+  function inferPersonaFromTitle(title) {
+    title = title.toLowerCase();
+    for (const key in titlePersonaMap) {
+      if (title.includes(key)) return titlePersonaMap[key];
+    }
+    return "Core";
+  }
+
+  function capitalize(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
+  async function loadUsers() {
+    try {
+      const response = await fetch("users.csv");
+      if (!response.ok) throw new Error("File not found");
+      const data = await response.text();
+      const rows = data.split("\n").slice(1);
+
+      rows.forEach(row => {
+        if (!row.trim()) return;
+        const cols = row.split(",");
+        const id = cols[0].trim();
+        users[id] = {
+          name: cols[1] || "Unknown",
+          classdescription: cols[2] || "Unknown",
+          jobfamily: cols[3] || "Unknown",
+          jobtitle: cols[4] || "Unknown",
+          businesstitle: cols[5] || "Unknown",
+          persona: cols[7] ? capitalize(cols[7].trim()) : inferPersonaFromTitle(cols[3] || "")
+        };
+      });
+
+      console.log("Users loaded successfully");
+      document.getElementById("lookupBtn").disabled = false;
+
+    } catch (error) {
+      console.error("Error loading CSV:", error);
+      document.getElementById("result").innerHTML = "<p style='color:red;'>Error: Could not load user data. Check if users.csv is in the correct folder.</p>";
+      // Optional: Enable button anyway so people can use the "Title prompt" fallback- or are we going by job code?
+      document.getElementById("lookupBtn").disabled = false;
+    }
+  }
+
+  function lookupUser() {
+    let id = document.getElementById("harvardID").value.trim();
+    if (!id) {
+      document.getElementById("result").innerHTML = "<p>Please enter a Harvard ID.</p>";
+      return;
+    }
+
+    let user = users[id];
+    let persona;
+
+    if (!user) {
+      let title = prompt("User not found. Enter job title to estimate persona:");
+      if (!title) {
+        document.getElementById("result").innerHTML = "<p>No job title provided.</p>";
+        return;
+      }
+      persona = inferPersonaFromTitle(title);
+      user = {
+        name: "Prototype User",
+        jobCode: "Unknown",
+        businesstitle: "Unknown",
+        jobtitle: title,
+        classdescription: "Estimated",
+        jobfamily: "Estimated",
+        persona: persona,
+      };
+    } else {
+      persona = user.persona;
+    }
+
+    let personaKey = capitalize(persona);
+    let devices = deviceMatrix[personaKey] || [];
+
+    let output = `
+      <h3>User Information</h3>
+      <p><b>Name:</b> ${user.name}</p>
+      <p><b>Class:</b> ${user.classdescription}</p>
+      <p><b>Job Family:</b> ${user.jobfamily}</p>
+      <p><b>Job Title:</b> ${user.jobtitle}</p>
+      <p><b>Business Title:</b> ${user.businesstitle}</p>
+      <hr>
+      <h3>Assigned Persona: <span style="color: #A51C30;">${personaKey}</span></h3>
+      <h3>Recommended Devices</h3>`;
+
+    devices.forEach(device => {
+      output += `<div class="device"><a href="${device.url}" target="_blank">${device.name}</a></div>`;
+    });
+
+    document.getElementById("result").innerHTML = `<div class="resultCard">${output}</div>`;
+  }
+
+  // These run as soon as the script loads -- I THINK THIS IS ADEQUAT? ;/
+  loadUsers();
+
+  document.getElementById("harvardID").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+      event.preventDefault(); 
+      lookupUser();
+    }
+  });
+</script>
+</body>
+
+</html>
