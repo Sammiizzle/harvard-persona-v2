@@ -139,10 +139,8 @@
   </div>
 
   <script>
-    // Global User Registry populated by CSV
     const users = {};
 
-    // 1. THE HARDWARE CATALOG MATRIX
     const personaMatrix = {
       "admin-core": {
         label: "Academic & Administrative Professional Users - Core",
@@ -188,16 +186,13 @@
       }
     };
 
-    // 2. THE POLICY ENGINE MAP (Job Code -> Persona Key)
-    // Easily update this as we validate job codes!
     const jobCodeToPersona = {
-      "I0756M": "admin-core",       // Applications Mgt II (Manager/Supervisor -> Core)
-      "IT Program Manager V": "admin-advanced", // Fallback text strings work too
-      "I0858P": "power-advanced",   // Sr. Systems Analyst (Upgraded to Advanced)
+      "I0756M": "admin-core",     
+      "IT Program Manager V": "admin-advanced",
+      "I0858P": "power-advanced",
       "Software Engineer": "power-advanced" 
     };
 
-    // Simulated HR Export Data (HUID, Name, Class, Job Code/Family, Business Title)
     const csvText = `
 Harvard ID,Name,classdescription,jobcode,businesstitle
 60846642,Eric Thompson,Admin & Professional,I0756M,Associate Director Endpoint Solutions
@@ -239,12 +234,11 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
       }
 
       let user = users[id];
-      let personaKey = "admin-core"; // Default Safety Net
+      let personaKey = "admin-core";
       let safetyNetUsed = false;
       let reasonForSafetyNet = "";
 
       if (!user) {
-        // Condition A: User completely missing from HR file
         safetyNetUsed = true;
         reasonForSafetyNet = "User record not found in HR roster. Default baseline applied.";
         user = {
@@ -254,7 +248,6 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
           businesstitle: "N/A"
         };
       } else {
-        // Condition B: User exists, check if their Job Code is mapped
         if (jobCodeToPersona[user.jobCode]) {
           personaKey = jobCodeToPersona[user.jobCode];
         } else {
@@ -263,11 +256,9 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
         }
       }
 
-      // Fetch target specs from our discrete catalog keys
       const currentPersona = personaMatrix[personaKey];
       const devices = currentPersona.devices;
 
-      // Render Dashboard Card UI
       let html = "<div class='resultCard'>";
       html += "<h3>User Account Details</h3>";
       html += "<p><b>Harvard ID:</b> " + id + "</p>";
@@ -297,7 +288,6 @@ Harvard ID,Name,classdescription,jobcode,businesstitle
       resultDiv.innerHTML = html;
     }
 
-    // Initialize application execution
     loadUsersFromCSV();
 
     document.getElementById("harvardID").addEventListener("keypress", function (event) {
